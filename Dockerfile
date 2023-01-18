@@ -1,6 +1,7 @@
 ARG SIGNAL_CLI_VERSION=0.11.4
 ARG LIBSIGNAL_CLIENT_VERSION=0.20.0
 ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION=0.11.4-1
+ARG SIGNAL_CLI_VERSION_INOI=0.11.4-inoi
 
 ARG SWAG_VERSION=1.6.7
 ARG GRAALVM_JAVA_VERSION=17
@@ -17,6 +18,7 @@ ARG GRAALVM_JAVA_VERSION
 ARG GRAALVM_VERSION
 ARG BUILD_VERSION_ARG
 ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION
+ARG SIGNAL_CLI_VERSION_INOI
 
 COPY ext/libraries/libsignal-client/v${LIBSIGNAL_CLIENT_VERSION} /tmp/libsignal-client-libraries
 
@@ -56,6 +58,15 @@ RUN cd /tmp/ \
 	&& wget -nv https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}-Linux.tar.gz -O /tmp/signal-cli.tar.gz \
 	&& tar xf signal-cli.tar.gz
 
+
+# Substitute official AsamK signal-cli lib within our self build version
+COPY ext/libraries/inoi/v${SIGNAL_CLI_VERSION_INOI} /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib
+
+RUN rm /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib/signal-cli-${SIGNAL_CLI_VERSION}.jar \
+    && mv /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib/signal-cli-${SIGNAL_CLI_VERSION_INOI}.jar \
+    /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib/signal-cli-${SIGNAL_CLI_VERSION}.jar
+    #&& ls -a /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib
+
 # build native image with graalvm
 
 RUN arch="$(uname -m)"; \
@@ -68,9 +79,10 @@ RUN arch="$(uname -m)"; \
 
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
 		cd /tmp \
-		&& git clone https://github.com/AsamK/signal-cli.git signal-cli-${SIGNAL_CLI_VERSION}-source \
+		&& git clone https://github.com/IlyaAvdeev/signal-cli.git signal-cli-${SIGNAL_CLI_VERSION}-source \
 		&& cd signal-cli-${SIGNAL_CLI_VERSION}-source \
-		&& git checkout -q v${SIGNAL_CLI_VERSION} \
+#		&& git checkout -q v${SIGNAL_CLI_VERSION} \
+        && git checkout -q origin/IB-180-update-endpoints \
 		&& cd /tmp && tar xf gvm.tar.gz \
 		&& export GRAALVM_HOME=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION} \
 		&& export PATH=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin:$PATH \
