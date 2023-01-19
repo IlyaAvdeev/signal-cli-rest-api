@@ -1,7 +1,7 @@
-ARG SIGNAL_CLI_VERSION=0.11.4
+ARG SIGNAL_CLI_VERSION=0.11.6
 ARG LIBSIGNAL_CLIENT_VERSION=0.20.0
-ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION=0.11.4-1
-ARG SIGNAL_CLI_VERSION_INOI=0.11.4-inoi
+ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION=0.11.6-1
+ARG SIGNAL_CLI_VERSION_INOI=0.11.6-inoi
 
 ARG SWAG_VERSION=1.6.7
 ARG GRAALVM_JAVA_VERSION=17
@@ -82,7 +82,7 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 		&& git clone https://github.com/IlyaAvdeev/signal-cli.git signal-cli-${SIGNAL_CLI_VERSION}-source \
 		&& cd signal-cli-${SIGNAL_CLI_VERSION}-source \
 #		&& git checkout -q v${SIGNAL_CLI_VERSION} \
-        && git checkout -q origin/IB-180-update-endpoints \
+        && git checkout -q origin/IB-180-update-protocol-recent \
 		&& cd /tmp && tar xf gvm.tar.gz \
 		&& export GRAALVM_HOME=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION} \
 		&& export PATH=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin:$PATH \
