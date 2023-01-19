@@ -1,6 +1,6 @@
 ARG LIBSIGNAL_CLIENT_VERSION=0.21.1
 ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION=0.11.6-1
-ARG SIGNAL_CLI_VERSION_INOI=0.11.6-inoi
+ARG SIGNAL_CLI_VERSION=0.11.6-inoi
 
 ARG SWAG_VERSION=1.6.7
 ARG GRAALVM_JAVA_VERSION=17
@@ -16,7 +16,7 @@ ARG GRAALVM_JAVA_VERSION
 ARG GRAALVM_VERSION
 ARG BUILD_VERSION_ARG
 ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION
-ARG SIGNAL_CLI_VERSION_INOI
+ARG SIGNAL_CLI_VERSION
 
 COPY ext/libraries/libsignal-client/v${LIBSIGNAL_CLIENT_VERSION} /tmp/libsignal-client-libraries
 
@@ -53,9 +53,9 @@ RUN cd /tmp/ \
 	&& rm -r /tmp/swag-${SWAG_VERSION}
 
 #поменять на реально название архива
-COPY ./artefacts/signal-cli-${SIGNAL_CLI_VERSION_INOI}.tar /tmp
+COPY ./artefacts/signal-cli-${SIGNAL_CLI_VERSION}.tar /tmp
 RUN cd /tmp/ \
-    && mv /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}.tar /tmp/signal-cli.tar \
+    && mv /tmp/signal-cli-${SIGNAL_CLI_VERSION}.tar /tmp/signal-cli.tar \
 	&& tar xf signal-cli.tar
 
 # build native image with graalvm
@@ -70,13 +70,13 @@ RUN arch="$(uname -m)"; \
 
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
 		cd /tmp \
-		&& git clone https://github.com/IlyaAvdeev/signal-cli.git signal-cli-${SIGNAL_CLI_VERSION_INOI}-source \
-		&& cd signal-cli-${SIGNAL_CLI_VERSION_INOI}-source \
+		&& git clone https://github.com/IlyaAvdeev/signal-cli.git signal-cli-${SIGNAL_CLI_VERSION}-source \
+		&& cd signal-cli-${SIGNAL_CLI_VERSION}-source \
         && git checkout -q origin/IB-180-update-protocol-recent \
 		&& cd /tmp && tar xf gvm.tar.gz \
 		&& export GRAALVM_HOME=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION} \
 		&& export PATH=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin:$PATH \
-		&& cd /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source \
+		&& cd /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source \
 		&& sed -i 's/Signal-Android\/5.22.3/Signal-Android\/5.51.7/g' src/main/java/org/asamk/signal/BaseConfig.java \
 		&& chmod +x /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu \
 		&& /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu install native-image; \
@@ -93,37 +93,37 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 		#&& apt-get -qq download signal-cli-native=${SIGNAL_CLI_NATIVE_PACKAGE_VERSION} < /dev/null > /dev/null \
 		&& ar x *.deb \
 		&& tar xf data.tar.gz \
-		&& mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile \
-		&& cp /tmp/signal-cli-native/usr/bin/signal-cli-native  /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile/signal-cli; \
+		&& mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile \
+		&& cp /tmp/signal-cli-native/usr/bin/signal-cli-native  /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile/signal-cli; \
     elif [ "$(uname -m)" = "armv7l" ] ; then \
 		echo "GRAALVM doesn't support 32bit" \
 		&& echo "Creating temporary file, otherwise the below copy doesn't work for armv7" \
-		&& mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile \
-		&& touch /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile/signal-cli; \
+		&& mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile \
+		&& touch /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile/signal-cli; \
     else \
 		echo "Unknown architecture"; \
     fi;
 
-RUN mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile
-COPY artefacts/signal-cli /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile
+RUN mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile
+COPY artefacts/signal-cli /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile
 
 # replace libsignal-client
 
-RUN ls /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}/lib/libsignal-client-${LIBSIGNAL_CLIENT_VERSION}.jar || (echo "\n\nsignal-client jar file with version ${LIBSIGNAL_CLIENT_VERSION} not found. Maybe the version needs to be bumped in the signal-cli-rest-api Dockerfile?\n\n" && echo "Available version: \n" && ls /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}/lib/libsignal-client-* && echo "\n\n" && exit 1)
+RUN ls /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib/libsignal-client-${LIBSIGNAL_CLIENT_VERSION}.jar || (echo "\n\nsignal-client jar file with version ${LIBSIGNAL_CLIENT_VERSION} not found. Maybe the version needs to be bumped in the signal-cli-rest-api Dockerfile?\n\n" && echo "Available version: \n" && ls /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib/libsignal-client-* && echo "\n\n" && exit 1)
 
 # workaround until upstream is fixed
-RUN cd /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}/lib \
-	&& unzip signal-cli-${SIGNAL_CLI_VERSION_INOI}.jar \
+RUN cd /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib \
+	&& unzip signal-cli-${SIGNAL_CLI_VERSION}.jar \
 	&& sed -i 's/Signal-Android\/5.22.3/Signal-Android\/5.51.7/g' org/asamk/signal/BaseConfig.class \
-	&& zip -r signal-cli-${SIGNAL_CLI_VERSION_INOI}.jar org/ META-INF/ \
+	&& zip -r signal-cli-${SIGNAL_CLI_VERSION}.jar org/ META-INF/ \
 	&& rm -rf META-INF \
 	&& rm -rf org
 
 RUN cd /tmp/ \
-	&& zip -qu /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}/lib/libsignal-client-${LIBSIGNAL_CLIENT_VERSION}.jar libsignal_jni.so \
-	&& zip -qr signal-cli-${SIGNAL_CLI_VERSION_INOI}.zip signal-cli-${SIGNAL_CLI_VERSION_INOI}/* \
-    && unzip -q /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}.zip -d /opt \
-	&& rm -f /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}.zip
+	&& zip -qu /tmp/signal-cli-${SIGNAL_CLI_VERSION}/lib/libsignal-client-${LIBSIGNAL_CLIENT_VERSION}.jar libsignal_jni.so \
+	&& zip -qr signal-cli-${SIGNAL_CLI_VERSION}.zip signal-cli-${SIGNAL_CLI_VERSION}/* \
+    && unzip -q /tmp/signal-cli-${SIGNAL_CLI_VERSION}.zip -d /opt \
+	&& rm -f /tmp/signal-cli-${SIGNAL_CLI_VERSION}.zip
 
 COPY src/api /tmp/signal-cli-rest-api-src/api
 COPY src/client /tmp/signal-cli-rest-api-src/client
@@ -146,7 +146,7 @@ ENV GIN_MODE=release
 
 ENV PORT=8080
 
-ARG SIGNAL_CLI_VERSION_INOI
+ARG SIGNAL_CLI_VERSION
 ARG BUILD_VERSION_ARG
 
 ENV BUILD_VERSION=$BUILD_VERSION_ARG
@@ -157,24 +157,24 @@ RUN dpkg-reconfigure debconf --frontend=noninteractive \
 	&& rm -rf /var/lib/apt/lists/* 
 
 COPY --from=buildcontainer /tmp/signal-cli-rest-api-src/signal-cli-rest-api /usr/bin/signal-cli-rest-api
-COPY --from=buildcontainer /opt/signal-cli-${SIGNAL_CLI_VERSION_INOI} /opt/signal-cli-${SIGNAL_CLI_VERSION_INOI}
-COPY --from=buildcontainer /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile/signal-cli /opt/signal-cli-${SIGNAL_CLI_VERSION_INOI}/bin/signal-cli-native
+COPY --from=buildcontainer /opt/signal-cli-${SIGNAL_CLI_VERSION} /opt/signal-cli-${SIGNAL_CLI_VERSION}
+COPY --from=buildcontainer /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile/signal-cli /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli-native
 COPY --from=buildcontainer /tmp/signal-cli-rest-api-src/scripts/jsonrpc2-helper /usr/bin/jsonrpc2-helper
 COPY entrypoint.sh /entrypoint.sh
 
 
 RUN groupadd -g 1000 signal-api \
 	&& useradd --no-log-init -M -d /home -s /bin/bash -u 1000 -g 1000 signal-api \
-	&& ln -s /opt/signal-cli-${SIGNAL_CLI_VERSION_INOI}/bin/signal-cli /usr/bin/signal-cli \
-	&& ln -s /opt/signal-cli-${SIGNAL_CLI_VERSION_INOI}/bin/signal-cli-native /usr/bin/signal-cli-native \
+	&& ln -s /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli /usr/bin/signal-cli \
+	&& ln -s /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli-native /usr/bin/signal-cli-native \
 	&& mkdir -p /signal-cli-config/ \
 	&& mkdir -p /home/.local/share/signal-cli
 
 # remove the temporary created signal-cli-native on armv7, as GRAALVM doesn't support 32bit
 RUN arch="$(uname -m)"; \
         case "$arch" in \
-            armv7l) echo "GRAALVM doesn't support 32bit" && rm /opt/signal-cli-${SIGNAL_CLI_VERSION_INOI}/bin/signal-cli-native /usr/bin/signal-cli-native  ;; \
-			aarch64) echo "GRAALVM temporarily disabled for aarch64" && rm /opt/signal-cli-${SIGNAL_CLI_VERSION_INOI}/bin/signal-cli-native /usr/bin/signal-cli-native  ;; \
+            armv7l) echo "GRAALVM doesn't support 32bit" && rm /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli-native /usr/bin/signal-cli-native  ;; \
+			aarch64) echo "GRAALVM temporarily disabled for aarch64" && rm /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli-native /usr/bin/signal-cli-native  ;; \
         esac;
 
 EXPOSE ${PORT}
