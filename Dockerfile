@@ -1,10 +1,10 @@
-ARG LIBSIGNAL_CLIENT_VERSION=0.20.0
+ARG LIBSIGNAL_CLIENT_VERSION=0.21.1
 ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION=0.11.6-1
 ARG SIGNAL_CLI_VERSION_INOI=0.11.6-inoi
 
 ARG SWAG_VERSION=1.6.7
 ARG GRAALVM_JAVA_VERSION=17
-ARG GRAALVM_VERSION=22.1.0
+ARG GRAALVM_VERSION=22.3.0
 
 ARG BUILD_VERSION_ARG=unset
 
@@ -53,10 +53,10 @@ RUN cd /tmp/ \
 	&& rm -r /tmp/swag-${SWAG_VERSION}
 
 #поменять на реально название архива
-COPY ./artefacts/signal-cli-${SIGNAL_CLI_VERSION_INOI}-Linux.tar.gz /tmp
+COPY ./artefacts/signal-cli-${SIGNAL_CLI_VERSION_INOI}.tar /tmp
 RUN cd /tmp/ \
-    && mv /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-Linux.tar.gz /tmp/signal-cli.tar.gz \
-	&& tar xf signal-cli.tar.gz
+    && mv /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}.tar /tmp/signal-cli.tar \
+	&& tar xf signal-cli.tar
 
 # build native image with graalvm
 
@@ -78,9 +78,9 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 		&& export PATH=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin:$PATH \
 		&& cd /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source \
 		&& sed -i 's/Signal-Android\/5.22.3/Signal-Android\/5.51.7/g' src/main/java/org/asamk/signal/BaseConfig.java \
-		&& chmod +x /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu \ 
-		&& /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu install native-image \
-		&& ./gradlew -q nativeCompile; \
+		&& chmod +x /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu \
+		&& /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu install native-image; \
+		#&& ./gradlew -q nativeCompile; \
 	elif [ "$(uname -m)" = "aarch64" ] ; then \
 		echo "Use native image from @morph027 (https://packaging.gitlab.io/signal-cli/) for arm64 - many thanks to @morph027" \
 		&& curl -fsSL https://packaging.gitlab.io/signal-cli/gpg.key | apt-key add - \
@@ -103,6 +103,9 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     else \
 		echo "Unknown architecture"; \
     fi;
+
+RUN mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile
+COPY artefacts/signal-cli /tmp/signal-cli-${SIGNAL_CLI_VERSION_INOI}-source/build/native/nativeCompile
 
 # replace libsignal-client
 
