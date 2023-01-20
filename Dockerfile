@@ -1,10 +1,10 @@
-ARG SIGNAL_CLI_VERSION=0.11.4
+ARG SIGNAL_CLI_VERSION=0.11.4_inoi
 ARG LIBSIGNAL_CLIENT_VERSION=0.20.0
 ARG SIGNAL_CLI_NATIVE_PACKAGE_VERSION=0.11.4-1
 
 ARG SWAG_VERSION=1.6.7
 ARG GRAALVM_JAVA_VERSION=17
-ARG GRAALVM_VERSION=22.1.0
+ARG GRAALVM_VERSION=22.3.0
 
 ARG BUILD_VERSION_ARG=unset
 
@@ -52,9 +52,10 @@ RUN cd /tmp/ \
 	&& cp /tmp/swag-${SWAG_VERSION}/swag /usr/bin/swag \
 	&& rm -r /tmp/swag-${SWAG_VERSION}
 
+COPY ./artefacts/signal-cli-${SIGNAL_CLI_VERSION}.tar /tmp
 RUN cd /tmp/ \
-	&& wget -nv https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}-Linux.tar.gz -O /tmp/signal-cli.tar.gz \
-	&& tar xf signal-cli.tar.gz
+	&& mv /tmp/signal-cli-${SIGNAL_CLI_VERSION}.tar /tmp/signal-cli.tar \
+	&& tar xf signal-cli.tar
 
 # build native image with graalvm
 
@@ -68,17 +69,17 @@ RUN arch="$(uname -m)"; \
 
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
 		cd /tmp \
-		&& git clone https://github.com/AsamK/signal-cli.git signal-cli-${SIGNAL_CLI_VERSION}-source \
+		&& git clone https://github.com/IlyaAvdeev/signal-cli.git signal-cli-${SIGNAL_CLI_VERSION}-source \
 		&& cd signal-cli-${SIGNAL_CLI_VERSION}-source \
-		&& git checkout -q v${SIGNAL_CLI_VERSION} \
+		&& git checkout -q origin/v0.11.4-protocol-update \
 		&& cd /tmp && tar xf gvm.tar.gz \
 		&& export GRAALVM_HOME=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION} \
 		&& export PATH=/tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin:$PATH \
 		&& cd /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source \
 		&& sed -i 's/Signal-Android\/5.22.3/Signal-Android\/5.51.7/g' src/main/java/org/asamk/signal/BaseConfig.java \
 		&& chmod +x /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu \ 
-		&& /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu install native-image \
-		&& ./gradlew -q nativeCompile; \
+		&& /tmp/graalvm-ce-java${GRAALVM_JAVA_VERSION}-${GRAALVM_VERSION}/bin/gu install native-image; \
+		#&& ./gradlew -q nativeCompile; \
 	elif [ "$(uname -m)" = "aarch64" ] ; then \
 		echo "Use native image from @morph027 (https://packaging.gitlab.io/signal-cli/) for arm64 - many thanks to @morph027" \
 		&& curl -fsSL https://packaging.gitlab.io/signal-cli/gpg.key | apt-key add - \
@@ -101,6 +102,9 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     else \
 		echo "Unknown architecture"; \
     fi;
+
+RUN mkdir -p /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile
+COPY artefacts/signal-cli /tmp/signal-cli-${SIGNAL_CLI_VERSION}-source/build/native/nativeCompile
 
 # replace libsignal-client
 
@@ -177,6 +181,10 @@ EXPOSE ${PORT}
 ENV SIGNAL_CLI_CONFIG_DIR=/home/.local/share/signal-cli
 ENV SIGNAL_CLI_UID=1000
 ENV SIGNAL_CLI_GID=1000
+
+ENV deviceid=TEST1
+ENV publickey=TEST2
+ENV signature=TEST3
 
 ENTRYPOINT ["/entrypoint.sh"]
 
