@@ -1,5 +1,182 @@
 # Dockerized Signal Messenger REST API
 
+This is the third one of 3 repos ([libsignal-service-java](https://code.dev-ittest.ru/ittest/inoi/inoi-libsignal-service-java/-/tree/v2.15.3_unofficial_62-protocol-update),
+[signal-cli](https://code.dev-ittest.ru/ittest/inoi/inoi-signal-cli/-/tree/v0.11.4-protocol-update),
+[signal-cli-rest-api](https://code.dev-ittest.ru/ittest/inoi/inoi-signal-cli-rest-api/-/tree/v0.64-new-protocol))
+for building ChatBot functionality (its transport in general). This library/repo must be build after
+building _libsignal-service-java_ and _signal-cli_.
+
+### How to build
+
+Prerequisites:
+* Docker (most recent version)
+* GraalVM (tested against 22.3 version)
+* Create directory _artefacts_ inside of root repo dir and put _signal-cli-0.11.4_inoi.tar_ and _signal-cli_ inside of it (see building procedure of _signal-cli_ lib).
+
+Building:
+* Switch onto _v0.64-new-protocol_ branch.
+* Run docker build using
+```
+docker build -t inoi/signal-cli-rest-api:0.11.4_inoi .
+```
+
+How to run docker image:
+```
+docker run --restart=always -p 8080:8080 -e 'deviceid=e49d6d3c-4e4d-40f3-b00b-81b51625f83f-chatbot' -e 'publickey=MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt7Yzisy2c/C6fjEcUr7XWtWeVS+MuEadIpi+6mgkQiO3YQXHshtOQPo0Qx/eyr4DhavLZ9ZLm0/NJ9sBds/wIw==' -e 'signature=MEQCIArwHy2sSuTLnDPSo2/cAeMt/NpzVq3JV74igYrYkuiwAiB+TaTFa2N2e3PEX5MZcIWpc02dyqikk0KV6nwx3LAk7g==' -v /home/llya/.local/share/signal-cli:/home/.local/share/signal-cli -e 'MODE=native' inoi/signal-cli-rest-api:0.11.4_inoi
+```
+Note: you must regenerate _deviceid_, _publickey_ and _signature_ values for each chat bot. The directory 
+_/home/llya/.local/share/signal-cli_ store all information about chat bot signal account thus every chat bot must have its own 
+directory for persisting account information. 
+
+### How to run chat bot functionality(register bot _+12345000010_):
+
+```shell
+curl -X 'POST' 'http://localhost:8080/v1/register/%2B12345000010' -H 'accept: application/json' -H 'Content-Type: application/json' -d '{"captcha": "string", "use_voice": true}'
+```
+
+### How to run chat bot functionality(verify bot account _+12345000010_):
+
+```shell
+curl -X 'POST' 'http://localhost:8080/v1/register/%2B12345000010/verify/100010' -H 'accept: application/json' -H 'Content-Type: application/json' -d '{"pin": "string"}'
+```
+
+### How to run chat bot functionality(send messages from _+12345000010_ to _+12345000007_):
+
+```shell
+curl -X POST -H "Content-Type: application/json" 'http://localhost:8080/v2/send' -d '{"message": "Test via Signal API!", "number": "+12345000010", "recipients": [ "+12345000007" ]}'
+```
+
+Sample response:
+
+```json
+{"timestamp":"1673593246631"}
+```
+
+### How to run chat bot functionality(receive messages for _+12345000010_):
+
+```shell
+curl -X 'GET' 'http://localhost:8080/v1/receive/%2B12345000010' -H 'accept: application/json' | jq
+```
+
+Sample response 1:
+
+```json
+[
+  {
+    "envelope": {
+      "source": "+12345000007",
+      "sourceNumber": "+12345000007",
+      "sourceUuid": "e72d7de7-a8ad-4b30-85fd-014639e175da",
+      "sourceName": "",
+      "sourceDevice": 1,
+      "timestamp": 1674555222726,
+      "receiptMessage": {
+        "when": 1674555242173,
+        "isDelivery": true,
+        "isRead": false,
+        "isViewed": false,
+        "timestamps": [
+          1674555222726
+        ]
+      }
+    },
+    "account": "+12345000010"
+  }
+]
+```
+
+Sample response 2:
+
+```json
+[
+  {
+    "envelope": {
+      "source": "+12345000007",
+      "sourceNumber": "+12345000007",
+      "sourceUuid": "e72d7de7-a8ad-4b30-85fd-014639e175da",
+      "sourceName": "sadoha denis",
+      "sourceDevice": 1,
+      "timestamp": 1674555747545,
+      "dataMessage": {
+        "timestamp": 1674555747545,
+        "message": null,
+        "expiresInSeconds": 0,
+        "viewOnce": false
+      }
+    },
+    "account": "+12345000010"
+  },
+  {
+    "envelope": {
+      "source": "+12345000007",
+      "sourceNumber": "+12345000007",
+      "sourceUuid": "e72d7de7-a8ad-4b30-85fd-014639e175da",
+      "sourceName": "sadoha denis",
+      "sourceDevice": 1,
+      "timestamp": 1674555747558,
+      "receiptMessage": {
+        "when": 1674555747558,
+        "isDelivery": false,
+        "isRead": true,
+        "isViewed": false,
+        "timestamps": [
+          1674552893475,
+          1674555222726
+        ]
+      }
+    },
+    "account": "+12345000010"
+  },
+  {
+    "envelope": {
+      "source": "+12345000007",
+      "sourceNumber": "+12345000007",
+      "sourceUuid": "e72d7de7-a8ad-4b30-85fd-014639e175da",
+      "sourceName": "sadoha denis",
+      "sourceDevice": 1,
+      "timestamp": 1674555751943,
+      "dataMessage": {
+        "timestamp": 1674555751943,
+        "message": "Салам",
+        "expiresInSeconds": 0,
+        "viewOnce": false
+      }
+    },
+    "account": "+12345000010"
+  },
+  {
+    "envelope": {
+      "source": "+12345000007",
+      "sourceNumber": "+12345000007",
+      "sourceUuid": "e72d7de7-a8ad-4b30-85fd-014639e175da",
+      "sourceName": "sadoha denis",
+      "sourceDevice": 1,
+      "timestamp": 1674555763457,
+      "dataMessage": {
+        "timestamp": 1674555763457,
+        "message": "На здоровье",
+        "expiresInSeconds": 0,
+        "viewOnce": false,
+        "quote": {
+          "id": 1674555222726,
+          "author": "+12345000010",
+          "authorNumber": "+12345000010",
+          "authorUuid": "9923ed8e-1a82-49f7-ae41-fc6aeffc3fd2",
+          "text": "Please reply something to the bot",
+          "attachments": []
+        }
+      }
+    },
+    "account": "+12345000010"
+  }
+]
+```
+
+
+Below you will find documentation from the original repo
+
+---
+
 This project creates a small dockerized REST API around [signal-cli](https://github.com/AsamK/signal-cli).
 
 At the moment, the following functionality is exposed via REST:
