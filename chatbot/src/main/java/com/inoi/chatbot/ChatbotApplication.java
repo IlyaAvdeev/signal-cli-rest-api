@@ -32,9 +32,9 @@ public class ChatbotApplication {
 		String result = null;
 		try {
 			result = "publicKey = " + helper.getEncodedPublicKey() +
-					"\n privateKey =  " + helper.getEncodedPrivateKey() +
-					"\n chatbot device id = " + deviceId +
-					"\n signature = " + helper.sign(messageToSign);
+					"<br> privateKey =  " + helper.getEncodedPrivateKey() +
+					"<br> chatbot device id = " + deviceId +
+					"<br> signature = " + helper.sign(messageToSign);
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		} catch (InvalidKeyException e) {
