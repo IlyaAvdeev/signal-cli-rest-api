@@ -31,7 +31,7 @@ directory for persisting account information.
 ### How to run chat bot functionality(register bot _+12345000010_):
 
 ```shell
-curl -X 'POST' 'http://localhost:8080/v1/register/%2B12345000010' -H 'accept: application/json' -H 'Content-Type: application/json' -d '{"captcha": "string", "use_voice": true}'
+curl -X 'POST' 'http://localhost:8080/v1/register/%2B12345000010' -H 'accept: application/json' -H 'Content-Type: application/json' -d '{"captcha": ""}'
 ```
 
 ### How to run chat bot functionality(verify bot account _+12345000010_):
